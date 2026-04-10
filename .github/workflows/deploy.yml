@@ -1,0 +1,55 @@
+name: CI/CD Docker Hub
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: JDK 17 einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Maven testen
+        run: mvn -B clean test
+
+  docker:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name != 'pull_request' # kein Push bei PRs
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Docker Buildx einrichten
+        uses: docker/setup-buildx-action@v3
+
+      - name: Bei Docker Hub anmelden
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker Image bauen und pushen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/architecturerefcard01:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/architecturerefcard01:${{ github.sha }}
