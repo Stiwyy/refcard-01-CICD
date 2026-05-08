@@ -50,4 +50,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/dein-app-name:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/architecturerefcard01:latest
